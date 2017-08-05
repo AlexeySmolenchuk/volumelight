@@ -4,7 +4,7 @@ Fog shader for Houdini Mantra based on the first part of [this](https://www.soli
 
 It works similar to Lit Fog sahder. Create **Atmosphere** object an assign **volumelight** shader to it.
 Shader works only for primary rays, it simple, adjustable, animatable and has a simple noise to modulate albedo (not density).
-
+![beauty.jpg](https://github.com/somesanctus/volumelight/blob/master/img/beauty.jpg)
 Unlike **Lit Fog** it physicly correct, takes into account [Beer–Lambert](https://en.wikipedia.org/wiki/Beer%E2%80%93Lambert_law) law. It use modern algorithms such as Exponential sampling (works well in most cases, but noisy near the lights)
 
 **Equiangular sampling** (well in lights area, but noisy in shadows)
