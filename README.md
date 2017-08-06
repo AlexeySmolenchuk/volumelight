@@ -38,4 +38,5 @@ You can simply export distributions on per-light basis.
 For better sampling set **Max Distance** carefully. I recommend to render **volumelight** separately by turning objects to matte shading. You can set **Color** parameter greater then 1. Although it’s not physically correct sometimes it help to achive needed visual effect. Use IES profiles for better look.
 
 ## Limitations
-Work well only with decaying lights (excluding **Environment**, **Sun**, **Distant**)
+- Work well only with decaying lights (excluding **Environment**, **Sun**, **Distant**)
+- Rendering time grows linearly with number of lights.
