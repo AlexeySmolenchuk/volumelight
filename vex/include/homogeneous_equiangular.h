@@ -13,19 +13,20 @@ float misWeight(float a, b){
     // return a3/(a3+b*b*b);
 }
 
-
-vector computeLight(vector pos; int lid; vector scattering, extinction){
+// compute light distribution in given point
+vector computeLight(vector pos; int lid; vector scattering, extinction; float maxdist){
     vector clr = 0;
     illuminance( pos, {0,0,0}, M_PI, "lightmask", getlightname(lid)){
         if (max(Cl)>0.00001){
             shadow(Cl,pos,L);
-            clr += Cl * scattering * exp(-(length(L) + length(pos)) * extinction);
+            
+            clr += Cl * scattering * exp(-min(maxdist, (length(L) + length(pos))) * extinction) *0.5;// right value for uniform phase function
         }
     }
     return clr;
 }
 
-
+// this function defined like noise inside LitFog shader
 float simpleNoise(vector pos ,n_freq, n_off; float n_amp, n_rough; int n_octaves){
     float nval=0;
     if (n_amp != 0 && n_octaves > 0)
@@ -57,9 +58,14 @@ void compute(vector outColor, outOpacity; vector perlight[]; vector scattering, 
     float dist = min(maxdist,length(I));
     vector alldistrib = 0;
     outOpacity = 1 - exp(-dist * extinction);
-
-
-    int lights[]  = getlights();
+    
+    // get valid light selection
+    string lightmask, categories;
+    renderstate( "fog:lightmask", lightmask);
+    renderstate( "fog:categories", categories);
+    if (categories == "") categories = "*"; 
+    
+    int lights[]  = getlights("lightmask",lightmask, "categories",categories);
     float weight = 1.0/samples;
     
     // loop for per-light evaluation
@@ -104,7 +110,7 @@ void compute(vector outColor, outOpacity; vector perlight[]; vector scattering, 
             pdf = D/((thetaB - thetaA)*(D*D + tt*tt));
 
             pos = normalize(I)*d1;
-            clr=computeLight(pos, lid, scattering, extinction);
+            clr=computeLight(pos, lid, scattering, extinction, maxdist);
             clr *= simpleNoise(pos, n_freq, n_off, n_amp, n_rough, n_octaves);
             other_pdf = ext_lum/(exp(d1*ext_lum)-exp((d1-dist)*ext_lum));
             //other_pdf = pdf3;
@@ -126,7 +132,7 @@ void compute(vector outColor, outOpacity; vector perlight[]; vector scattering, 
             pdf  = ext_lum * a1 / (1.0 - minU);
 
             pos = normalize(I) * d2;
-            clr = computeLight(pos, lid, scattering, extinction);
+            clr = computeLight(pos, lid, scattering, extinction, maxdist);
             clr *= simpleNoise(pos, n_freq, n_off, n_amp, n_rough, n_octaves);
             other_pdf = D/((thetaB - thetaA)*(D*D+(delta-d2)*(delta-d2)));
             //other_pdf = 1.0/dist;
