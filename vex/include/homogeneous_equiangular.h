@@ -94,7 +94,7 @@ void compute(vector outColor, outOpacity; vector perlight[]; vector scattering, 
         
         for (int sample=0; sample<samples; sample++){
             
-            // 
+            // stratified sampling
             float r = (rand(sample-SID)+sample) / samples;
 
             // EQUIANGULAR SAMPLPING
