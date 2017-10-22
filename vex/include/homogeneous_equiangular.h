@@ -67,53 +67,46 @@ void compute(vector outColor, outOpacity; vector perlight[]; vector scattering, 
     
     int lights[]  = getlights("lightmask",lightmask, "categories",categories);
     float weight = 1.0/samples;
+    vector nI = normalize(I);
     
     // loop for per-light evaluation
     for (int i=0; i < len(lights); i++){
 
         int lid = lights[i];
-        vector pos, posL;
+        vector pos;
         vector clr;
         float scale;
         vector distrib = 0;
         float pdf, other_pdf;
-
+        
+        // get Light origin
+        vector posL = ptransform( getlightname( lights[i] ) , "space:camera" , {0,0,0});
+        
+        // get coord of closest point to light along (infinite) ray
+        float delta = dot(posL, nI);
+        
+        // get distance this point is from light
+        float D = length(delta*nI - posL);
+        
+        // get angle of endpoints
+        float thetaA = atan(0.0 - delta, D);
+        float thetaB = atan(dist - delta, D);
         
         for (int sample=0; sample<samples; sample++){
-        
-            //float r = rand(sample-SID);
-            //float r = nrandom("twister");
             
-            // Uses a quasi-stratified random number generator.
-            // This tends to distribute the random numbers evenly, reducing clumping and spacing.
-            float r = nrandom("qstrat");
-
-
+            // 
+            float r = (rand(sample-SID)+sample) / samples;
 
             // EQUIANGULAR SAMPLPING
-            // get pont on Light surface
-            sample_light(lid, nrandom()+i, random(SID+sample), 0, posL, clr, scale);
-
-            // get coord of closest point to light along (infinite) ray
-            float delta = dot(posL, normalize(I));
-            
-            // get distance this point is from light
-            float D = length(delta*normalize(I) - posL);
-            
-            // get angle of endpoints
-            float thetaA = atan(0.0 - delta, D);
-            float thetaB = atan(dist - delta, D);
-            
-            // take sample
             float tt = D*tan(lerp(thetaA, thetaB, r));
             float d1 = delta + tt;
             pdf = D/((thetaB - thetaA)*(D*D + tt*tt));
 
-            pos = normalize(I)*d1;
+            pos = nI * d1;
             clr=computeLight(pos, lid, scattering, extinction, maxdist);
             clr *= simpleNoise(pos, n_freq, n_off, n_amp, n_rough, n_octaves);
             other_pdf = ext_lum/(exp(d1*ext_lum)-exp((d1-dist)*ext_lum));
-            //other_pdf = pdf3;
+            // other_pdf = pdf3;
             clr /= pdf;
             clr *= (weight * misWeight(pdf, other_pdf));
             equiangular += clr;
@@ -131,11 +124,11 @@ void compute(vector outColor, outOpacity; vector perlight[]; vector scattering, 
             float d2 = -log(a1) / ext_lum;
             pdf  = ext_lum * a1 / (1.0 - minU);
 
-            pos = normalize(I) * d2;
+            pos = nI * d2;
             clr = computeLight(pos, lid, scattering, extinction, maxdist);
             clr *= simpleNoise(pos, n_freq, n_off, n_amp, n_rough, n_octaves);
             other_pdf = D/((thetaB - thetaA)*(D*D+(delta-d2)*(delta-d2)));
-            //other_pdf = 1.0/dist;
+            // other_pdf = 1.0/dist;
             clr /= pdf;
             clr *= (weight * misWeight(pdf, other_pdf));
             exponential += clr;
