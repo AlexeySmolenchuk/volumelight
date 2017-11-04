@@ -57,7 +57,7 @@ void compute(vector outColor, outOpacity; vector perlight[]; vector scattering, 
     float ext_lum = luminance(extinction);
     float dist = min(maxdist,length(I));
     vector alldistrib = 0;
-    outOpacity = 1 - exp(-dist * extinction);
+    outOpacity = exp(-dist * extinction);
     
     // get valid light selection
     string lightmask, categories;
