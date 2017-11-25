@@ -1,7 +1,8 @@
 # volumelight
 ## Overview
-Fog shader for Houdini Mantra based on the first part of [this](https://www.solidangle.com/research/egsr2012_volume.pdf) paper.
+Fog shader for Houdini Mantra based on [this](https://www.solidangle.com/research/egsr2012_volume.pdf) paper. **Heterogeneous** medium now supported.
 
+![cloud](https://github.com/somesanctus/volumelight/blob/master/img/cloud.jpg)
 ![beauty](https://github.com/somesanctus/volumelight/blob/master/img/beauty.jpg)
 ![tunnel](https://github.com/somesanctus/volumelight/blob/master/img/tunnel.jpg)
 
