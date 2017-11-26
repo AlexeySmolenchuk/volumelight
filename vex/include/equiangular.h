@@ -102,7 +102,41 @@ vector computeLight(vector pos; int lid; vector scattering, extinction; float ma
 	return clr;
 }
 
+// compute light distribution in given point
+vector computeLight(vector pos; int lid; vector scattering, extinction; float maxdist, height){
 
+	float h1, h2, h;
+	vector attenToPos, attenToLight;
+	
+	
+	h = fit01(pow(height, 0.25), 25, 0.0001);
+	h1 = ptransform("space:world", 0).y;
+	h2 = ptransform("space:world", pos).y;
+
+	if (abs(h1-h2)<0.001 || h==1){
+		attenToPos = exp(-extinction * exp(-h*h1) * length(pos));
+	}else{
+		attenToPos = exp (-extinction * ( length(pos)*(1-exp(h*(h1-h2))) / (h*exp(h*h1)*(h2-h1))));
+		}
+		
+	vector clr = 0;
+	illuminance( pos, {0,0,0}, M_PI, "lightmask", getlightname(lid)){
+		if (max(Cl)>0.00001){
+			shadow(Cl,pos,L);
+			
+			h1 = ptransform("space:world", pos+L).y;
+
+			if (abs(h1-h2)<0.001 || h==1){
+				attenToLight = exp(-extinction * exp(-h*h1) * length(L));
+			}else{
+				attenToLight = exp (-extinction * ( length(L)*(1-exp(h*(h1-h2))) / (h*exp(h*h1)*(h2-h1))));
+				}
+			
+			clr += Cl * scattering * exp(-h*h2) * attenToPos * attenToLight *0.5;// right value for uniform phase function
+		}
+	}
+	return clr;
+}
 
 
 
@@ -136,7 +170,7 @@ void compute(vector outColor,
 			outOpacity;
 			vector perlight[];
 			vector scattering, absorption;
-			float maxdist, shadowscale;
+			float maxdist, height, shadowscale;
 			int samples;
 			vector n_freq, n_off; float n_amp, n_rough; int n_octaves;
 			vector equiangular, exponential, debug_weights;
@@ -147,9 +181,25 @@ void compute(vector outColor,
 		vector extinction = absorption + scattering;
 		float ext_lum = luminance(extinction);
 		float dist = min(maxdist,length(I));
+		vector nI = normalize(I);
 		vector alldistrib = 0;
-		outOpacity = 1 - exp(-dist * extinction);
-		
+		if (height ==1 )
+		{
+			outOpacity = 1 - exp(-dist * extinction);
+		}
+		else
+		{
+			float h1, h2, h;
+			h1 = ptransform("space:world",0).y;
+			h2 = ptransform("space:world", vector(nI*dist)).y;
+			h = fit01(pow(height, 0.25), 25, 0.0001);
+			if (abs(h1-h2)<0.001 || h==1){
+				outOpacity = 1 - exp(-extinction * exp(-h*h1)*dist);
+			}else{
+				outOpacity = 1 - exp (-extinction * ( dist*(1-exp(h*(h1-h2))) / (h*exp(h*h1)*(h2-h1))));
+				}
+		}
+			
 		// get valid light selection
 		string lightmask, categories;
 		renderstate( "fog:lightmask", lightmask);
@@ -158,7 +208,7 @@ void compute(vector outColor,
 		
 		int lights[]  = getlights("lightmask",lightmask, "categories",categories);
 		float weight = 1.0/samples;
-		vector nI = normalize(I);
+
 		
 		// loop for per-light evaluation
 		for (int i=0; i < len(lights); i++){
@@ -193,8 +243,13 @@ void compute(vector outColor,
 				pdf = D/((thetaB - thetaA)*(D*D + tt*tt));
 
 				pos = nI * d1;
+				
+				if (height ==1 )
 				clr=computeLight(pos, lid, scattering, extinction, maxdist);
-				clr *= simpleNoise(pos, n_freq, n_off, n_amp, n_rough, n_octaves);
+				else
+				clr=computeLight(pos, lid, scattering, extinction, maxdist, height);
+				
+				 clr *= simpleNoise(pos, n_freq, n_off, n_amp, n_rough, n_octaves);
 				other_pdf = ext_lum/(exp(d1*ext_lum)-exp((d1-dist)*ext_lum));
 				clr /= pdf;
 				clr *= (weight * misWeight(pdf, other_pdf));
@@ -214,7 +269,12 @@ void compute(vector outColor,
 				pdf  = ext_lum * a1 / (1.0 - minU);
 
 				pos = nI * d2;
-				clr = computeLight(pos, lid, scattering, extinction, maxdist);
+				
+				if (height ==1 )
+				clr=computeLight(pos, lid, scattering, extinction, maxdist);
+				else
+				clr=computeLight(pos, lid, scattering, extinction, maxdist, height);
+				
 				clr *= simpleNoise(pos, n_freq, n_off, n_amp, n_rough, n_octaves);
 				other_pdf = D/((thetaB - thetaA)*(D*D+(delta-d2)*(delta-d2)));
 				clr /= pdf;
