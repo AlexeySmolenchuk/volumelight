@@ -110,7 +110,7 @@ vector computeLight(vector pos; int lid; vector scattering, extinction; float ma
 	
 	
 	h = fit01(pow(height, 0.25), 25, 0.0001);
-	h1 = ptransform("space:world", 0).y;
+	h1 = ptransform("space:world", vector(0)).y;
 	h2 = ptransform("space:world", pos).y;
 
 	if (abs(h1-h2)<0.001 || h==1){
@@ -190,7 +190,7 @@ void compute(vector outColor,
 		else
 		{
 			float h1, h2, h;
-			h1 = ptransform("space:world",0).y;
+			h1 = ptransform("space:world", vector(0)).y;
 			h2 = ptransform("space:world", vector(nI*dist)).y;
 			h = fit01(pow(height, 0.25), 25, 0.0001);
 			if (abs(h1-h2)<0.001 || h==1){
